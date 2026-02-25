@@ -721,15 +721,21 @@ pub fn init_core_fun_map() {
         return Ok(Some(rv_empty()));
     });
     add_fun(vec!["函数定义"],|self_t,params|{
-        let func = params.get(0).ok_or("函数定义:读取参数失败")?;
-        let fun = self_t.parse_fun_ast(func,false)?;
+        let fun = if let Some(func) = params.get(0) {
+            self_t.parse_fun_ast(func,false)?
+        } else {
+            String::new()
+        };
         let ast = astparser::parse_to_ast(&fun).map_err(|e| RedLang::make_err(&e))?;
         return Ok(Some(Rc::new(RedValue::Fun(ast))));
     });
     add_fun(vec!["定义命令"],|self_t,params|{
         let func_name = self_t.get_param_text_rc(params, 0)?;
-        let func = params.get(1).ok_or("定义命令:读取参数失败")?;
-        let fun = self_t.parse_fun_ast(func,false)?;
+        let fun = if let Some(func) = params.get(1) {
+            self_t.parse_fun_ast(func,false)?
+        } else {
+            String::new()
+        };
         let mut w = crate::G_CMD_MAP.write()?;
         match w.get_mut(&self_t.pkg_name){
             Some(r) => {
@@ -745,8 +751,12 @@ pub fn init_core_fun_map() {
     });
     add_fun(vec!["定义二类命令"],|self_t,params|{
         let func_name = self_t.get_param_text_rc(params, 0)?;
-        let func = params.get(1).ok_or("定义命令:读取参数失败")?;
-        let fun = format!("1FC0F025-BFE7-63A4-CA66-FC3FD8A55B7B{}",self_t.parse_fun_ast(func,false)?);
+        let fun_body = if let Some(func) = params.get(1) {
+            self_t.parse_fun_ast(func,false)?
+        } else {
+            String::new()
+        };
+        let fun = format!("1FC0F025-BFE7-63A4-CA66-FC3FD8A55B7B{}", fun_body);
         let mut w = crate::G_CMD_MAP.write()?;
         match w.get_mut(&self_t.pkg_name){
             Some(r) => {
